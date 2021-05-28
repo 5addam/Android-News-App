@@ -19,7 +19,7 @@ data class Article(
     val content: String
 ) {
     data class ArticleSource(
-        val id: String,
+        val id: Any,
         val name: String
     )
 }
