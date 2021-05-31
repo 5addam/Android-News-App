@@ -14,13 +14,15 @@ import com.newsapp.data.Article
 @TypeConverters(Converters::class)
 abstract class ArticleDB : RoomDatabase() {
 
-    abstract fun getArticleDao(): ArticleDB
+    abstract fun getArticleDao(): ArticleDao
 
     companion object {
         @Volatile
         private var instance: ArticleDB? = null
         private val LOCK = Any()
 
+        //whenever we create an instance of db this invoke fun will also be invoked
+        // synchronized(LOCK) makes sure that other threads can't access this block at the same time
         operator fun invoke(context: Context) = instance ?: synchronized(LOCK) {
             instance ?: createDB(context).also { instance = it }
         }
