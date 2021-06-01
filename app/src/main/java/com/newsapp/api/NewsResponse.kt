@@ -3,5 +3,5 @@ package com.newsapp.api
 import com.newsapp.data.Article
 
 data class NewsResponse(
-    val articles: MutableList<Article>
+    val articles: List<Article>
 )

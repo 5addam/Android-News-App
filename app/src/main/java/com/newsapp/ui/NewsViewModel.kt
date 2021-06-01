@@ -1,76 +1,61 @@
 package com.newsapp.ui
 
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import com.newsapp.api.NewsResponse
 import com.newsapp.data.Article
 import com.newsapp.repositories.NewsRepository
 import kotlinx.coroutines.launch
 import com.newsapp.util.Resource
+import dagger.assisted.Assisted
 import retrofit2.Response
 
 class NewsViewModel(
-    val newsRepository: NewsRepository
+    private val newsRepository: NewsRepository
 ) : ViewModel() {
+
     val breakingNews: MutableLiveData<Resource<NewsResponse>> = MutableLiveData()
     var breakingNewsPage = 1
     var breakingNewsResponse: NewsResponse? = null
 
-    val searchNews: MutableLiveData<Resource<NewsResponse>> = MutableLiveData()
-    var searchNewsPage = 1
-    var searchNewsResponse: NewsResponse? = null
+//    init {
+//        getBreakingNews("us")
+//    }
 
-    init {
-        getBreakingNews("us")
+//    fun getBreakingNews(countryCode: String) = viewModelScope.launch {
+//        breakingNews.postValue(Resource.Loading())
+//        val response = newsRepository.getBreakingNews(countryCode, breakingNewsPage)
+//        breakingNews.postValue(handleBreakingNewsResponse(response))
+//    }
+
+    private val currentCountry = MutableLiveData(DEFAULT_COUNTRY)
+    val topHeadlines = currentCountry.switchMap { country ->
+        newsRepository.getBreakingNews(country).cachedIn(viewModelScope)
     }
 
-    fun getBreakingNews(countryCode: String) = viewModelScope.launch {
-        breakingNews.postValue(Resource.Loading())
-        val response = newsRepository.getBreakingNews(countryCode, breakingNewsPage)
-        breakingNews.postValue(handleBreakingNewsResponse(response))
+    fun getBreakingNews(countryCode: String) {
+        currentCountry.value = countryCode
     }
 
-    fun searchNews(query: String) = viewModelScope.launch {
-        searchNews.postValue(Resource.Loading())
 
-        val response = newsRepository.searchNews(query, searchNewsPage)
-        searchNews.postValue(handleSearchNewsResponse(response))
+    private val currentQuery = MutableLiveData(CURRENT_QUERY)
+    val articles = currentQuery.switchMap { queryString ->
+        newsRepository.searchNews(queryString).cachedIn(viewModelScope)
     }
 
-    private fun handleBreakingNewsResponse(response: Response<NewsResponse>): Resource<NewsResponse> {
-        if (response.isSuccessful) {
-            response.body()?.let { resultResponse ->
-                breakingNewsPage++
-                if (breakingNewsResponse == null)
-                    breakingNewsResponse = resultResponse
-                else {
-                    val oldArticles = breakingNewsResponse?.articles
-                    val newArticles = resultResponse.articles
-                    oldArticles?.addAll(newArticles)
-                }
-                return Resource.Success(breakingNewsResponse ?: resultResponse)
-            }
-        }
-        return Resource.Error(response.message())
+    fun searchNews(query: String) {
+        currentQuery.value = query
     }
 
-    private fun handleSearchNewsResponse(response: Response<NewsResponse>): Resource<NewsResponse> {
-        if (response.isSuccessful) {
-            response.body()?.let { resultResponse ->
-                searchNewsPage++
-                if (searchNewsResponse == null)
-                    searchNewsResponse = resultResponse
-                else {
-                    val oldArticles = searchNewsResponse?.articles
-                    val newArticles = resultResponse.articles
-                    oldArticles?.addAll(newArticles)
-                }
-                return Resource.Success(searchNewsResponse ?: resultResponse)
-            }
-        }
-        return Resource.Error(response.message())
-    }
+//    private fun handleBreakingNewsResponse(response: Response<NewsResponse>): Resource<NewsResponse> {
+//        if (response.isSuccessful) {
+//            response.body()?.let { resultResponse ->
+//                return Resource.Success(resultResponse)
+//            }
+//        }
+//        return Resource.Error(response.message())
+//    }
 
     fun saveArticle(article: Article) = viewModelScope.launch {
         newsRepository.upsert(article)
@@ -80,5 +65,10 @@ class NewsViewModel(
 
     fun deleteArticle(article: Article) = viewModelScope.launch {
         newsRepository.deleteArticle(article)
+    }
+
+    companion object {
+        const val CURRENT_QUERY = ""
+        const val DEFAULT_COUNTRY = "us"
     }
 }

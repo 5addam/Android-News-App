@@ -1,20 +1,22 @@
 package com.newsapp.ui.fragments
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
+import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
+import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.newsapp.R
 import com.newsapp.adapters.NewsAdapter
+import com.newsapp.adapters.SearchNewsAdapter
 import com.newsapp.data.Article
 import com.newsapp.databinding.FragmentSearchNewsBinding
 import com.newsapp.ui.MainActivity
 import com.newsapp.ui.NewsViewModel
-import com.newsapp.util.Resource
+import kotlinx.android.synthetic.main.fragment_saved_news.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
@@ -22,7 +24,7 @@ import kotlinx.coroutines.launch
 
 class SearchNewsFragment : Fragment(R.layout.fragment_search_news),
     NewsAdapter.OnItemClickListener {
-    lateinit var viewModel: NewsViewModel
+    private lateinit var viewModel: NewsViewModel
     lateinit var newsAdapter: NewsAdapter
 
 
@@ -37,25 +39,10 @@ class SearchNewsFragment : Fragment(R.layout.fragment_search_news),
 
         initViewData()
 
-        viewModel.searchNews.observe(viewLifecycleOwner, Observer { response ->
-            when (response) {
-                is Resource.Success -> {
-                    hideProgressBar()
-                    response.data?.let { newsResponse ->
-                        newsAdapter.differ.submitList(newsResponse.articles)
-                    }
-                }
-                is Resource.Error -> {
-                    hideProgressBar()
-                    response.message?.let { message ->
-                        Log.e(TAG, "An Error Occurred: $message")
-                    }
-                }
-                is Resource.Loading -> {
-                    showProgressBar()
-                }
-            }
+        viewModel.articles.observe(viewLifecycleOwner, Observer {
+            newsAdapter.submitData(viewLifecycleOwner.lifecycle, it)
         })
+
     }
 
     private fun initViewData() {
@@ -78,23 +65,31 @@ class SearchNewsFragment : Fragment(R.layout.fragment_search_news),
 
                 }
             }
+            btnRetry.setOnClickListener {
+                newsAdapter.retry()
+            }
         }
+        newsAdapter.addLoadStateListener { loadState ->
+            binding.apply {
+                paginationProgressBar.isVisible = loadState.source.refresh is LoadState.Loading
+                rvSearchNews.isVisible = loadState.source.refresh is LoadState.NotLoading
+                btnRetry.isVisible = loadState.source.refresh is LoadState.Error
+                txtError.isVisible = loadState.source.refresh is LoadState.Error
 
+                //empty view
+                if (loadState.source.refresh is LoadState.NotLoading &&
+                    loadState.append.endOfPaginationReached &&
+                    newsAdapter.itemCount < 1
+                ) {
+                    rvSearchNews.isVisible = false
+                    txtViewEmpty.isVisible = true
+                } else
+                    txtViewEmpty.isVisible = false
+            }
+
+        }
     }
 
-    private fun hideProgressBar() {
-        binding.paginationProgressBar.visibility = View.INVISIBLE
-    }
-
-    private fun showProgressBar() {
-        binding.paginationProgressBar.visibility = View.VISIBLE
-    }
-
-    override fun onItemClick(article: Article) {
-        val action =
-            SearchNewsFragmentDirections.actionSearchNewsFragmentToArticleFragment(article)
-        findNavController().navigate(action)
-    }
 
     companion object {
         private const val TAG = "SearchNewsFragment"
@@ -104,6 +99,12 @@ class SearchNewsFragment : Fragment(R.layout.fragment_search_news),
     override fun onDestroy() {
         super.onDestroy()
         _binding = null
+    }
+
+    override fun onItemClick(article: Article) {
+        val action =
+            SearchNewsFragmentDirections.actionSearchNewsFragmentToArticleFragment(article)
+        findNavController().navigate(action)
     }
 
 

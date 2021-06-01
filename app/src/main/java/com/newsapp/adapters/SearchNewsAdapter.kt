@@ -10,12 +10,13 @@ import com.bumptech.glide.Glide
 import com.newsapp.data.Article
 import com.newsapp.databinding.ItemArticleBinding
 
-class NewsAdapter(private val listener: OnItemClickListener) :
-    PagingDataAdapter<Article, NewsAdapter.ArticleViewHolder>(ARTICLE_COMPARATOR) {
+
+class SearchNewsAdapter(private val listener: OnItemClickListener) :
+    PagingDataAdapter<Article, SearchNewsAdapter.SearchArticleViewHolder>(ARTICLE_COMPARATOR) {
 
 //    val differ = AsyncListDiffer(this, ARTICLE_COMPARATOR)
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ArticleViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SearchArticleViewHolder {
         val binding = ItemArticleBinding.inflate(
             LayoutInflater.from(
                 parent.context
@@ -23,20 +24,16 @@ class NewsAdapter(private val listener: OnItemClickListener) :
             parent,
             false
         )
-        return ArticleViewHolder(binding)
+        return SearchArticleViewHolder(binding)
     }
 
-    override fun onBindViewHolder(holder: ArticleViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: SearchArticleViewHolder, position: Int) {
         val currentItem = getItem(position)
         if (currentItem != null)
             holder.bind(currentItem)
     }
 
-//    override fun getItemCount(): Int {
-//        return differ.currentList.size
-//    }
-
-    inner class ArticleViewHolder(private val binding: ItemArticleBinding) :
+    inner class SearchArticleViewHolder(private val binding: ItemArticleBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
         init {
