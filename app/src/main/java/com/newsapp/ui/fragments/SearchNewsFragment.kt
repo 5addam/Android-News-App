@@ -11,12 +11,10 @@ import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.newsapp.R
 import com.newsapp.adapters.NewsAdapter
-import com.newsapp.adapters.SearchNewsAdapter
 import com.newsapp.data.Article
 import com.newsapp.databinding.FragmentSearchNewsBinding
 import com.newsapp.ui.MainActivity
 import com.newsapp.ui.NewsViewModel
-import kotlinx.android.synthetic.main.fragment_saved_news.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay

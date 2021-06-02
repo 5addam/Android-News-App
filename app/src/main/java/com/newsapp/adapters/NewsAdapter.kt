@@ -7,8 +7,11 @@ import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
+import com.newsapp.R
 import com.newsapp.data.Article
 import com.newsapp.databinding.ItemArticleBinding
+import java.util.*
 
 class NewsAdapter(private val listener: OnItemClickListener) :
     PagingDataAdapter<Article, NewsAdapter.ArticleViewHolder>(ARTICLE_COMPARATOR) {
@@ -56,12 +59,18 @@ class NewsAdapter(private val listener: OnItemClickListener) :
             binding.apply {
                 Glide.with(itemView)
                     .load(article.urlToImage)
+                    .transition(DrawableTransitionOptions.withCrossFade())
+                    .error(R.drawable.ic_error)
+                    .placeholder(R.drawable.ic_image)
                     .into(ivArticleImage)
 
                 tvSource.text = article.source.name
                 tvTitle.text = article.title
                 tvDescription.text = article.description
-                tvPublishedAt.text = article.publishedAt
+                val publishAt = article.publishedAt.split("T")
+                tvPublishedAt.text = publishAt[0]
+                tvPublishTime.text = publishAt[1].removeSuffix("Z")
+
 
 
             }
@@ -69,6 +78,8 @@ class NewsAdapter(private val listener: OnItemClickListener) :
         }
 
     }
+
+
 
     interface OnItemClickListener {
         fun onItemClick(article: Article)

@@ -2,19 +2,20 @@ package com.newsapp.adapters
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
+import com.newsapp.R
 import com.newsapp.data.Article
 import com.newsapp.databinding.ItemArticleBinding
 
 
-class SearchNewsAdapter(private val listener: OnItemClickListener) :
-    PagingDataAdapter<Article, SearchNewsAdapter.SearchArticleViewHolder>(ARTICLE_COMPARATOR) {
+class SavedNewsAdapter(private val listener: OnItemClickListener) :
+    RecyclerView.Adapter<SavedNewsAdapter.SearchArticleViewHolder>() {
 
-//    val differ = AsyncListDiffer(this, ARTICLE_COMPARATOR)
+    val differ = AsyncListDiffer(this, ARTICLE_COMPARATOR)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SearchArticleViewHolder {
         val binding = ItemArticleBinding.inflate(
@@ -28,7 +29,7 @@ class SearchNewsAdapter(private val listener: OnItemClickListener) :
     }
 
     override fun onBindViewHolder(holder: SearchArticleViewHolder, position: Int) {
-        val currentItem = getItem(position)
+        val currentItem = differ.currentList[position]
         if (currentItem != null)
             holder.bind(currentItem)
     }
@@ -40,7 +41,7 @@ class SearchNewsAdapter(private val listener: OnItemClickListener) :
             binding.root.setOnClickListener {
                 val pos = bindingAdapterPosition
                 if (pos != RecyclerView.NO_POSITION) {
-                    val item = getItem(pos)
+                    val item = differ.currentList[pos]
                     if (item != null) {
                         listener.onItemClick(item)
                     }
@@ -53,12 +54,17 @@ class SearchNewsAdapter(private val listener: OnItemClickListener) :
             binding.apply {
                 Glide.with(itemView)
                     .load(article.urlToImage)
+                    .transition(DrawableTransitionOptions.withCrossFade())
+                    .error(R.drawable.ic_error)
+                    .placeholder(R.drawable.ic_image)
                     .into(ivArticleImage)
 
                 tvSource.text = article.source.name
                 tvTitle.text = article.title
                 tvDescription.text = article.description
-                tvPublishedAt.text = article.publishedAt
+                val publishAt = article.publishedAt.split("T")
+                tvPublishedAt.text = publishAt[0]
+                tvPublishTime.text = publishAt[1].removeSuffix("Z")
 
 
             }
@@ -80,6 +86,14 @@ class SearchNewsAdapter(private val listener: OnItemClickListener) :
                 oldItem == newItem
 
         }
+    }
+
+    override fun getItemCount(): Int {
+        return differ.currentList.size
+    }
+
+    fun getArticle(pos: Int): Article? {
+        return differ.currentList[pos]
     }
 
 }
