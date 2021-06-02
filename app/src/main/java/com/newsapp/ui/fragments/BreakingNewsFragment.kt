@@ -13,6 +13,7 @@ import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.newsapp.R
+import com.newsapp.adapters.ArticleLoadStateAdapter
 import com.newsapp.adapters.NewsAdapter
 import com.newsapp.data.Article
 import com.newsapp.databinding.FragmentBreakingNewsBinding
@@ -69,7 +70,10 @@ class BreakingNewsFragment : Fragment(R.layout.fragment_breaking_news),
         newsAdapter = NewsAdapter(this)
         binding.apply {
             rvBreakingNews.apply {
-                adapter = newsAdapter
+                adapter = newsAdapter.withLoadStateHeaderAndFooter(
+                    header = ArticleLoadStateAdapter { newsAdapter.retry() },
+                    footer = ArticleLoadStateAdapter { newsAdapter.retry() }
+                )
                 layoutManager = LinearLayoutManager(activity)
             }
 
